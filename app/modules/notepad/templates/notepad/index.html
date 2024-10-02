@@ -18,7 +18,7 @@
     {% endfor %}
     </ul>
 {% else %}
-    <p>You have no notepads.</p>
+    <p>You have no notepads. You can create one <a href="{{ url_for('notepad.create_notepad') }}">here</a>.</p>
 {% endif %}
 
 {% endblock %}
