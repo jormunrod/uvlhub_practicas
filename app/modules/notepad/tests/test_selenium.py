@@ -1,5 +1,6 @@
 from selenium.common.exceptions import NoSuchElementException
 import time
+from app import db
 
 from core.environment.host import get_host_for_selenium_testing
 from core.selenium.common import initialize_driver, close_driver
@@ -29,6 +30,8 @@ def test_notepad_index():
 
         # Close the browser
         close_driver(driver)
+        
+
 
 
 # Call the test function
