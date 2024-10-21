@@ -1,10 +1,15 @@
 import pytest
 from app import db
+from unittest.mock import patch, MagicMock
 from app.modules.conftest import login, logout
+from app.modules.notepad.services import NotepadService
+from app.modules.notepad.models import Notepad
 from app.modules.auth.models import User
 from app.modules.profile.models import UserProfile
 
-
+@pytest.fixture
+def notepad_service():
+    return NotepadService()
 
 @pytest.fixture(scope='module')
 def test_client(test_client):
@@ -22,15 +27,6 @@ def test_client(test_client):
 
     yield test_client
 
-
-def test_sample_assertion(test_client):
-    """
-    Sample test to verify that the test framework and environment are working correctly.
-    It does not communicate with the Flask application; it only performs a simple assertion to
-    confirm that the tests in this module can be executed.
-    """
-    greeting = "Hello, World!"
-    assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
     
 def test_list_empty_notepad_get(test_client):
     """
@@ -44,32 +40,43 @@ def test_list_empty_notepad_get(test_client):
     assert b"You have no notepads." in response.data, "The expected content is not present on the page"
 
     logout(test_client)
-    
-def test_create_notepad_post(test_client):
-    """
-    Tests creating a new notepad via POST request with JSON data.
-    """
-    login_response = login(test_client, "user@example.com", "test1234")
-    assert login_response.status_code == 200, "Login was unsuccessful."
 
-    # Enviamos el notepad como JSON
-    response = test_client.post("/notepad/create", 
-                                json={"title": "Test Title", "body": "Test Body"})
-    assert response.status_code == 302, "Notepad creation was unsuccessful."
-    
-    logout(test_client)
-    
-def test_list_notepad_get(test_client):
-    """
-    Tests access to the notepad list with one notepad via GET request.
-    """
-    login_response = login(test_client, "user@example.com", "test1234")
-    assert login_response.status_code == 200, "Login was unsuccessful."
-    
-    response = test_client.get("/notepad")
-    assert response.status_code == 200, "The notepad page could not be accessed."
-    assert b"Test Title" in response.data, "The expected content is not present on the page"
-    
-    logout(test_client)
-    
+def test_create(notepad_service):
+    with patch.object(notepad_service.repository, 'create') as mock_create:
+        mock_notepad = MagicMock(id=1)
+        mock_create.return_value = mock_notepad
+
+        title = 'Test Notepad'
+        body = 'Test Body'
+        user_id = 1
+
+        result = notepad_service.create(title=title, body=body, user_id=user_id)
+
+        assert result == mock_notepad
+        assert result.id == 1
+        mock_create.assert_called_once_with(title=title, body=body, user_id=user_id)
+
+def test_update(notepad_service):
+    with patch.object(notepad_service.repository, 'update') as mock_update:
+        mock_notepad = MagicMock(id=1)
+        mock_update.return_value = mock_notepad
+
+        notepad_id = 1
+        title = 'Updated Notepad'
+        body = 'Updated Body'
+
+        result = notepad_service.update(notepad_id, title=title, body=body)
+
+        assert result == mock_notepad
+        mock_update.assert_called_once_with(notepad_id, title=title, body=body)
+
+def test_delete(notepad_service):
+    with patch.object(notepad_service.repository, 'delete') as mock_delete:
+        mock_delete.return_value = True
+
+        notepad_id = 1
+        result = notepad_service.delete(notepad_id)
+
+        assert result is True
+        mock_delete.assert_called_once_with(notepad_id)
     
